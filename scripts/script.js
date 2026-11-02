@@ -14,7 +14,7 @@ class Song {
     }
 }
 
-const preLoadedTrackPaths = ["../assets/songs/01_-_Candle_Flicker.mp3", "../assets/songs/02_-_Subliminal.mp3"]; 
+const preLoadedTrackPaths = ["./assets/songs/01_-_Candle_Flicker.mp3", "./assets/songs/02_-_Subliminal.mp3"]; 
 
 window.onload = () => {
     let leftCanvas, leftContext,
