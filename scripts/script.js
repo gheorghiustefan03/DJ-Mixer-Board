@@ -14,6 +14,8 @@ class Song {
     }
 }
 
+const preLoadedTrackPaths = ["../assets/songs/01_-_Candle_Flicker.mp3", "../assets/songs/02_-_Subliminal.mp3"]; 
+
 window.onload = () => {
     let leftCanvas, leftContext,
         rightCanvas, rightContext,
@@ -109,9 +111,6 @@ window.onload = () => {
     let substractFromLeft = 0, substractFromRight = 0;
     let leftCrossValue = 1, rightCrossValue = 1;
 
-    console.log(leftGainNode.gain.value);
-    console.log(rightGainNode.gain.value);
-
     crossfader.addEventListener("input", () => {
         leftCrossValue = ((2 - crossfader.value / 50) <= 1) ? (2 - crossfader.value / 50) : 1
         rightCrossValue = (crossfader.value / 50 <= 1) ? (crossfader.value / 50) : 1;
@@ -122,9 +121,6 @@ window.onload = () => {
     leftVolume.addEventListener("input", () => {
         substractFromLeft = leftVolume.value / 100;
         leftGainNode.gain.value = (leftCrossValue - substractFromLeft) > 0 ? leftCrossValue - substractFromLeft : 0;
-
-        console.log(substractFromLeft);
-        console.log(leftGainNode.gain.value);
     })
 
     rightVolume.addEventListener("input", () => {
@@ -153,69 +149,71 @@ window.onload = () => {
 
                 if (item.kind === "file" && item.type === "audio/mpeg") {
                     const file = item.getAsFile();
-
-                    const reader = new FileReader();
-
-                    reader.onload = function (e) {
-                        const arrayBuffer = this.result;
-                        const dv = new DataView(arrayBuffer);
-
-                        const tagPosition = dv.byteLength - 128;
-
-                        let title = "No title found";
-                        let artist = "No artist found";
-
-                        if (dv.getUint8(tagPosition) === 84 &&
-                            dv.getUint8(tagPosition + 1) === 65 &&
-                            dv.getUint8(tagPosition + 2) === 71) {
-
-                            title = getStringFromDataView(dv, tagPosition + 3, 30) || title;
-                            artist = getStringFromDataView(dv, tagPosition + 33, 30) || artist;
-
-                        }
-
-                        const audio = new Audio();
-
-                        const objectURL = URL.createObjectURL(file);
-                        audio.src = objectURL;
-                        audio.onloadedmetadata = function () {
-                            const minutes = Math.floor(audio.duration / 60);
-                            const seconds = Math.floor(audio.duration % 60);
-                            let duration = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                            songs.push(new Song(file, objectURL, title, artist));
-
-                            let row = songsTable.insertRow(-1);
-                            var headerCell = document.createElement("TH");
-                            headerCell.innerHTML = songs.length;
-                            headerCell.setAttribute('scope', 'row');
-                            row.appendChild(headerCell);
-
-                            let titleCell = row.insertCell(-1);
-                            titleCell.innerHTML = title;
-
-                            let artistCell = row.insertCell(-1);
-                            artistCell.innerHTML = artist;
-
-                            let durationCell = row.insertCell(-1);
-                            durationCell.innerHTML = duration;
-
-                            row.onclick = (ev) => {
-                                ev.preventDefault();
-                                if (selectedSong !== null) {
-                                    let index = songs.indexOf(selectedSong);
-                                    songsTable.rows.item(index + 2).classList.remove('table-secondary');
-                                }
-                                selectedSong = songs[row.cells[0].innerHTML - 1];
-                                row.setAttribute('class', 'table-secondary');
-                            }
-
-                        };
-
-                    };
-                    reader.readAsArrayBuffer(file);
+                    uploadMp3File(file);
                 }
             });
         }
+    }
+
+    function uploadMp3File(file) {
+        const reader = new FileReader();
+
+        reader.onload = function (e) {
+            const arrayBuffer = this.result;
+            const dv = new DataView(arrayBuffer);
+
+            const tagPosition = dv.byteLength - 128;
+    
+            let title = "No title found";
+            let artist = "No artist found";
+    
+            if (dv.getUint8(tagPosition) === 84 &&
+                dv.getUint8(tagPosition + 1) === 65 &&
+                dv.getUint8(tagPosition + 2) === 71) {
+    
+                title = getStringFromDataView(dv, tagPosition + 3, 30) || title;
+                artist = getStringFromDataView(dv, tagPosition + 33, 30) || artist;
+    
+            }
+    
+            const audio = new Audio();
+    
+            const objectURL = URL.createObjectURL(file);
+            audio.src = objectURL;
+            audio.onloadedmetadata = function () {
+                const minutes = Math.floor(audio.duration / 60);
+                const seconds = Math.floor(audio.duration % 60);
+                let duration = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                songs.push(new Song(file, objectURL, title, artist));
+    
+                let row = songsTable.insertRow(-1);
+                var headerCell = document.createElement("TH");
+                headerCell.innerHTML = songs.length;
+                headerCell.setAttribute('scope', 'row');
+                row.appendChild(headerCell);
+    
+                let titleCell = row.insertCell(-1);
+                titleCell.innerHTML = title;
+    
+                let artistCell = row.insertCell(-1);
+                artistCell.innerHTML = artist;
+    
+                let durationCell = row.insertCell(-1);
+                durationCell.innerHTML = duration;
+    
+                row.onclick = (ev) => {
+                    ev.preventDefault();
+                    if (selectedSong !== null) {
+                        let index = songs.indexOf(selectedSong);
+                        songsTable.rows.item(index + 2).classList.remove('table-secondary');
+                    }
+                    selectedSong = songs[row.cells[0].innerHTML - 1];
+                    row.setAttribute('class', 'table-secondary');
+                }
+    
+            };
+        };
+        reader.readAsArrayBuffer(file);
     }
 
     function getStringFromDataView(dv, start, length) {
@@ -404,7 +402,6 @@ window.onload = () => {
         const playbackRate = minRate * Math.pow(maxRate / minRate, t);
     
         audioPlayer.playbackRate = playbackRate;
-        console.log(`Playback Rate: ${playbackRate.toFixed(2)}`);
     }
    
     const leftLowpassFilter = audioContext.createBiquadFilter();
@@ -492,8 +489,6 @@ window.onload = () => {
     
         const frequency = minFreq * Math.pow(maxFreq / minFreq, normalizedAngle);
         filter.frequency.value = frequency;
-    
-        console.log(`Filter Frequency: ${frequency.toFixed(2)} Hz`);
 
         knobAngles[knobAngleProp] = angle;
     }
@@ -507,6 +502,18 @@ window.onload = () => {
         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
         modal.show();
     }
+
+    preLoadedTrackPaths.forEach(async trackPath => {
+        const response = await fetch(trackPath);
+        const blob = await response.blob();
+        
+        const file = new File(
+            [blob],
+            trackPath.split('/').pop(),
+            { type: "audio/mpeg" }
+        );
+        uploadMp3File(file)
+    })
     
     showInfoPopup();
 }
