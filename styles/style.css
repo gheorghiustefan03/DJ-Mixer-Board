@@ -415,7 +415,7 @@ body {
     height: 70px;
     margin: 0;
     border: 0;
-    background: url('./assets/buttons/CrossfaderKnob.png')
+    background: url('../assets/buttons/CrossfaderKnob.png')
         center / contain no-repeat;
     cursor: pointer;
 }
@@ -428,7 +428,7 @@ body {
     padding: 0;
     border: 0;
     border-radius: 0;
-    background: url('./assets/buttons/CrossfaderKnob.png')
+    background: url('../assets/buttons/CrossfaderKnob.png')
         center / contain no-repeat;
     cursor: pointer;
 }
